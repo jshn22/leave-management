@@ -2,6 +2,9 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -10,35 +13,63 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import testRoutes from './routes/testRoutes.js';
 import { AppError, globalErrorHandler } from './utils/errorHandler.js';
 import { seedDatabase } from './utils/seedDatabase.js';
+import connectDB from './config/database.js';
 
 const app = express();
 
+// Connect to database
+connectDB();
+
+// CORS Configuration - MUST BE FIRST
 app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:5174',
-    'https://leave-management-tevz.onrender.com'
-  ],
+    'https://leave-management-tevz.onrender.com',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+app.use(mongoSanitize());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use('/api/', limiter);
+
+// Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.get('/api/health', (req, res) => {
+// Health check
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-app.use('/api/auth', authRoutes);
 
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/tests', testRoutes);
 
+// 404 handler
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
+// Global error handler
 app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 5000;
