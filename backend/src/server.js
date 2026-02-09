@@ -34,6 +34,9 @@ app.use(cors({
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
+app.get('/', (req, res) => {
+  res.json({ message: "Leave Management API is running 🚀" });
+});
 // Handle preflight requests
 app.options('*', cors());
 
