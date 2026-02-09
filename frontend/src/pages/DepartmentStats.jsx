@@ -9,7 +9,7 @@ export default function DepartmentStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await api.get('/leaves/stats/departments');
+        const response = await api.get('/api/leaves/stats/departments');
         setStats(response.data.data || []);
       } catch (error) {
         setStats([]);
