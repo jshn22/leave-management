@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       try {
-        const response = await api.get('/auth/profile');
+        const response = await api.get('/api/auth/profile');
         setUser(response.data.user);
       } catch (error) {
         localStorage.removeItem('accessToken');
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { user, accessToken, refreshToken } = response.data;
       
       localStorage.setItem('accessToken', accessToken);
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/api/auth/register', userData);
       const { user, accessToken, refreshToken } = response.data;
 
       localStorage.setItem('accessToken', accessToken);
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post('/api/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
